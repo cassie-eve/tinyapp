@@ -108,7 +108,12 @@ app.get('/login', (req, res) => {
   const templateVars = { 
     user: users[userId]
   };
-  res.render('urls_login', templateVars);
+  if (!req.cookies['user_id']) {
+    res.render('urls_login', templateVars);
+    console.log(req.cookies['user_id']);
+  } else {
+    res.redirect('/urls');
+  }
 });
 
 app.post("/register", (req, res) => {
