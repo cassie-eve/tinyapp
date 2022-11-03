@@ -12,6 +12,15 @@ function generateRandomString() {
   return Array.from(Array(6), () => Math.floor(Math.random() * 36).toString(36)).join('');
 };
 
+function userExists(userEmail, userList) {
+  for (const user in userList) {
+    if (userList[user].email === userEmail) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const users = {};
 
 const urlDatabase = {
@@ -75,14 +84,24 @@ app.get('/register', (req, res) => {
 
 app.post("/register", (req, res) => {
   const randomId = generateRandomString();
-  res.cookie('user_id', randomId);
-  users[randomId] = { 
-    id: randomId,
-    email: req.body.email,
-    password: req.body.password
+  const userEmail = req.body.email;
+  const userPass = req.body.password;
+
+  if (!userEmail || !userPass) {
+    res.status(400).send("Invalid email password combination.");
+  } else if (userExists(userEmail, users)) {
+    res.status(400).send("This email already exists, please log in.");
+  } else {
+    res.cookie('user_id', randomId);
+    users[randomId] = { 
+      id: randomId,
+      email: userEmail,
+      password: userPass
+    }
+    console.log(users)
+    console.log(userExists(userEmail, users))
+    res.redirect('/urls');
   }
-  console.log(users)
-  res.redirect('/urls');
 });
 
 app.get("/urls/new", (req, res) => {
