@@ -21,6 +21,15 @@ function userExists(userEmail, userList) {
   return false;
 };
 
+function getUserId(userEmail, userList) {
+  for (const user in userList) {
+    if (userList[user].email === userEmail) {
+      return userList[user].id;
+    }
+  }
+  return false;
+};
+
 const users = {};
 
 const urlDatabase = {
@@ -51,21 +60,18 @@ app.post("/urls", (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  const randomId = generateRandomString();
   const userEmail = req.body.email;
   const userPass = req.body.password;
+  const id = getUserId(userEmail, users);
 
   if (!userEmail || !userPass) {
-    res.status(400).send("Invalid email password combination.");
-  } else if (userExists(userEmail, users)) {
-    res.status(400).send("This email already exists, please log in.");
+    res.status(400).send("Please enter both an email address and password");
+  } else if (!userExists(userEmail, users)) {
+    res.status(403).send("This email address has not been registered.");
+  } else if (users[id].password !== req.body.password) {
+    res.status(403).send("Incorrect email / password combination.");
   } else {
-    res.cookie('user_id', randomId);
-    users[randomId] = { 
-      id: randomId,
-      email: userEmail,
-      password: userPass
-    }
+    res.cookie('user_id', id);
     res.redirect('/urls');
   }
 })
@@ -135,7 +141,7 @@ app.get("/urls/new", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 app.get("/urls/:id", (req, res) => {
