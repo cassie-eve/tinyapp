@@ -39,11 +39,23 @@ function getUserId(userEmail, userList) {
   return false;
 };
 
-const users = {};
+const users = {
+  '0owvjr': {
+    id: "0owvjr",
+    email: 'cass@cass.ca',
+    password: 'cass'
+  }
+};
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userId: "0owvjr"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userId: "0owvjr"
+  }
 };
 
 app.get("/", (req, res) => {
@@ -175,7 +187,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { 
     id: req.params.id, 
     user: users[userId],
-    longURL: urlDatabase[req.params.id]
+    longURL: urlDatabase[req.params.id].longURL
   };
   if (urlExists(req.params.id, urlDatabase)) {
     res.render("urls_show", templateVars);
