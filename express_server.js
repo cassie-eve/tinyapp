@@ -12,6 +12,8 @@ function generateRandomString() {
   return Array.from(Array(6), () => Math.floor(Math.random() * 36).toString(36)).join('');
 };
 
+const users = {};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -67,6 +69,18 @@ app.get('/register', (req, res) => {
     username: req.cookies["username"]
   };
   res.render('urls_register', templateVars);
+});
+
+app.post("/register", (req, res) => {
+  const randomId = generateRandomString();
+  res.cookie('user_id', randomId);
+  users[randomId] = { 
+    id: randomId,
+    email: req.body.email,
+    password: req.body.password
+  }
+  console.log(users)
+  res.redirect('/urls');
 });
 
 app.get("/urls/new", (req, res) => {
