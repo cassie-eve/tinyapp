@@ -21,6 +21,15 @@ function userExists(userEmail, userList) {
   return false;
 };
 
+function urlExists(entered, urlList) {
+  for (const url in urlList) {
+    if (url === entered) {
+      return true;
+    }
+  }
+  return false;
+};
+
 function getUserId(userEmail, userList) {
   for (const user in userList) {
     if (userList[user].email === userEmail) {
@@ -54,9 +63,13 @@ app.get("/hello", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString()
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`/urls/${shortURL}`);
+  if (!req.cookies['user_id']) {
+    res.status(403).send("You need to be signed in to do this.");
+  } else {
+    let shortURL = generateRandomString()
+    urlDatabase[shortURL] = req.body.longURL;
+    res.redirect(`/urls/${shortURL}`);
+  }
 });
 
 app.post('/login', (req, res) => {
@@ -100,7 +113,11 @@ app.get('/register', (req, res) => {
   const templateVars = { 
     user: users[userId]
   };
-  res.render('urls_register', templateVars);
+  if (!req.cookies['user_id']) {
+    res.render('urls_register', templateVars);
+  } else {
+    res.redirect('/urls');
+  }
 });
 
 app.get('/login', (req, res) => {
@@ -141,7 +158,11 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: users[userId]
   };
-  res.render("urls_new", templateVars);
+  if (req.cookies['user_id']) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.post("/logout", (req, res) => {
@@ -156,14 +177,18 @@ app.get("/urls/:id", (req, res) => {
     user: users[userId],
     longURL: urlDatabase[req.params.id]
   };
-  res.render("urls_show", templateVars);
+  if (urlExists(req.params.id, urlDatabase)) {
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(404).send("Oops! This URL doesn't exist.");
+  }
 });
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
-  if (longURL) {
+  if (longURL && urlExists(req.params.id, urlDatabase)) {
     res.redirect(longURL);
   } else {
-    console.log('404')
+    res.status(404).send("Oops! This URL doesn't exist.");
   }
 });
