@@ -12,6 +12,17 @@ function generateRandomString() {
   return Array.from(Array(6), () => Math.floor(Math.random() * 36).toString(36)).join('');
 };
 
+function userExists(userEmail, userList) {
+  for (const user in userList) {
+    if (userList[user].email === userEmail) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const users = {};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -40,8 +51,23 @@ app.post("/urls", (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username)
-  res.redirect('/urls');
+  const randomId = generateRandomString();
+  const userEmail = req.body.email;
+  const userPass = req.body.password;
+
+  if (!userEmail || !userPass) {
+    res.status(400).send("Invalid email password combination.");
+  } else if (userExists(userEmail, users)) {
+    res.status(400).send("This email already exists, please log in.");
+  } else {
+    res.cookie('user_id', randomId);
+    users[randomId] = { 
+      id: randomId,
+      email: userEmail,
+      password: userPass
+    }
+    res.redirect('/urls');
+  }
 })
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -55,36 +81,68 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
+  const userId = req.cookies['user_id'];
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: users[userId]
   };
   res.render('urls_index', templateVars);
 });
 
 app.get('/register', (req, res) => {
+  const userId = req.cookies['user_id'];
   const templateVars = { 
-    username: req.cookies["username"]
+    user: users[userId]
   };
   res.render('urls_register', templateVars);
 });
 
+app.get('/login', (req, res) => {
+  const userId = req.cookies['user_id'];
+  const templateVars = { 
+    user: users[userId]
+  };
+  res.render('urls_login', templateVars);
+});
+
+app.post("/register", (req, res) => {
+  const randomId = generateRandomString();
+  const userEmail = req.body.email;
+  const userPass = req.body.password;
+
+  if (!userEmail || !userPass) {
+    res.status(400).send("Invalid email password combination.");
+  } else if (userExists(userEmail, users)) {
+    res.status(400).send("This email already exists, please log in.");
+  } else {
+    res.cookie('user_id', randomId);
+    users[randomId] = { 
+      id: randomId,
+      email: userEmail,
+      password: userPass
+    }
+    res.redirect('/urls');
+  }
+});
+
 app.get("/urls/new", (req, res) => {
+  const userId = req.cookies['user_id'];
   const templateVars = {
-    username: req.cookies["username"]
+    user: users[userId]
   };
   res.render("urls_new", templateVars);
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
 app.get("/urls/:id", (req, res) => {
+  const userId = req.cookies['user_id'];
   const templateVars = { 
     id: req.params.id, 
-    username: req.cookies["username"],
+    user: users[userId],
     longURL: urlDatabase[req.params.id]
   };
   res.render("urls_show", templateVars);
