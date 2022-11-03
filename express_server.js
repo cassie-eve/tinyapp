@@ -51,8 +51,23 @@ app.post("/urls", (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('user', req.body.user);
-  res.redirect('/urls');
+  const randomId = generateRandomString();
+  const userEmail = req.body.email;
+  const userPass = req.body.password;
+
+  if (!userEmail || !userPass) {
+    res.status(400).send("Invalid email password combination.");
+  } else if (userExists(userEmail, users)) {
+    res.status(400).send("This email already exists, please log in.");
+  } else {
+    res.cookie('user_id', randomId);
+    users[randomId] = { 
+      id: randomId,
+      email: userEmail,
+      password: userPass
+    }
+    res.redirect('/urls');
+  }
 })
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -82,6 +97,14 @@ app.get('/register', (req, res) => {
   res.render('urls_register', templateVars);
 });
 
+app.get('/login', (req, res) => {
+  const userId = req.cookies['user_id'];
+  const templateVars = { 
+    user: users[userId]
+  };
+  res.render('urls_login', templateVars);
+});
+
 app.post("/register", (req, res) => {
   const randomId = generateRandomString();
   const userEmail = req.body.email;
@@ -98,8 +121,6 @@ app.post("/register", (req, res) => {
       email: userEmail,
       password: userPass
     }
-    console.log(users)
-    console.log(userExists(userEmail, users))
     res.redirect('/urls');
   }
 });
