@@ -39,6 +39,17 @@ function getUserId(userEmail, userList) {
   return false;
 };
 
+function urlsForUser(id, urlList) {
+  const filteredUrls = {};
+  
+  for (let url in urlList) {
+    if (urlList[url].userId === id) {
+      filteredUrls[url] = urlList[url];
+    }
+  }
+  return filteredUrls;
+}
+
 const users = {
   '0owvjr': {
     id: "0owvjr",
@@ -114,7 +125,7 @@ app.post("/urls/:id", (req, res) => {
 app.get('/urls', (req, res) => {
   const userId = req.cookies['user_id'];
   const templateVars = { 
-    urls: urlDatabase,
+    urls: urlsForUser(userId, urlDatabase),
     user: users[userId]
   };
   res.render('urls_index', templateVars);
@@ -139,7 +150,6 @@ app.get('/login', (req, res) => {
   };
   if (!req.cookies['user_id']) {
     res.render('urls_login', templateVars);
-    console.log(req.cookies['user_id']);
   } else {
     res.redirect('/urls');
   }
