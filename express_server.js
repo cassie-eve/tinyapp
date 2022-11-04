@@ -2,7 +2,7 @@ const express = require("express");
 var cookieParser = require('cookie-parser');
 const app = express();
 app.use(cookieParser())
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 
 app.set("view engine", "ejs");
 
@@ -116,8 +116,12 @@ app.post('/login', (req, res) => {
 })
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect(`/urls`);
+  if (urlDatabase[req.params.id].userId === req.cookies['user_id']) {
+    delete urlDatabase[req.params.id];
+    res.redirect(`/urls`);
+  } else {
+    res.status(403).send("You do not have permission to delete this URL.");
+  }
 });
 
 app.post("/urls/:id", (req, res) => {
@@ -200,6 +204,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { 
     id: req.params.id, 
     user: users[userId],
+    urlUserId: req.params.id.userId,
     longURL: urlDatabase[req.params.id].longURL
   };
   if (urlExists(req.params.id, urlDatabase)) {
@@ -211,9 +216,13 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
+  console.log(urlDatabase[req.params.id]);
   if (longURL && urlExists(req.params.id, urlDatabase)) {
     res.redirect(longURL);
   } else {
     res.status(404).send("Oops! This URL doesn't exist.");
   }
 });
+
+// Fix bug clicking lil link 
+// Unable to delete URLs through curl that belong to you -cant scope cookies

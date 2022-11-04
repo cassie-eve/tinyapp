@@ -15,16 +15,22 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">
-          Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
-        </p>
-        <h4>Edit</h4>
-        <form method="POST" action="/urls/<%= id %>">
-          <label for="url">New URL:</label>
-          <input type="url" name="url" placeholder="New URL">
-          <button type="submit">Submit</button>
-        </form>
+        <% if(user){ %>
+          <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+          <p class="card-text">
+            Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+          </p>
+          <h4>Edit</h4>
+          <form method="POST" action="/urls/<%= id %>">
+            <label for="url">New URL:</label>
+            <input type="url" name="url" placeholder="New URL">
+            <button type="submit">Submit</button>
+          </form>
+        <% } else if(urlUserId !== user){ %> 
+          <p>You don't have access to this URL</p>
+        <% } else{ %> 
+          <p>Log in to access your URLs!</p>
+        <% } %>
       </div>
       <div class="card-footer text-muted"></div>
     </div>
