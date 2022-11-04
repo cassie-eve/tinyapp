@@ -90,7 +90,10 @@ app.post("/urls", (req, res) => {
     res.status(403).send("You need to be signed in to do this.");
   } else {
     let shortURL = generateRandomString()
-    urlDatabase[shortURL] = req.body.longURL;
+    urlDatabase[shortURL] = {
+        longURL: req.body.longURL,
+        userId: req.cookies['user_id']
+    }
     res.redirect(`/urls/${shortURL}`);
   }
 });
