@@ -1,5 +1,6 @@
 const express = require("express");
 var cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 const app = express();
 app.use(cookieParser())
 const PORT = 8080;
@@ -81,10 +82,6 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.post("/urls", (req, res) => {
   if (!req.cookies['user_id']) {
     res.status(403).send("You need to be signed in to do this.");
@@ -101,19 +98,19 @@ app.post("/urls", (req, res) => {
 app.post('/login', (req, res) => {
   const userEmail = req.body.email;
   const userPass = req.body.password;
+  const hashed = bcrypt.hashSync(userPass, 10);
   const id = getUserId(userEmail, users);
-
-  if (!userEmail || !userPass) {
-    res.status(400).send("Please enter both an email address and password");
-  } else if (!userExists(userEmail, users)) {
-    res.status(403).send("This email address has not been registered.");
-  } else if (users[id].password !== req.body.password) {
-    res.status(403).send("Incorrect email / password combination.");
-  } else {
+  for (let x in users) {
+    if (users[x]['email'] === req.body.email && bcrypt.compareSync(users[x]['password'], hashed)) {
     res.cookie('user_id', id);
     res.redirect('/urls');
+    } else if (!userExists(userEmail, users)) {
+      res.status(403).send("This email address has not been registered.");
+    } else {
+      res.status(403).send("Incorrect email / password combination.");
+    }
   }
-})
+});
 
 app.post("/urls/:id/delete", (req, res) => {
   if (urlDatabase[req.params.id].userId === req.cookies['user_id']) {
@@ -166,8 +163,9 @@ app.post("/register", (req, res) => {
   const randomId = generateRandomString();
   const userEmail = req.body.email;
   const userPass = req.body.password;
+  const hashed = bcrypt.hashSync(userPass, 10);
 
-  if (!userEmail || !userPass) {
+  if (!userEmail || !hashed) {
     res.status(400).send("Invalid email password combination.");
   } else if (userExists(userEmail, users)) {
     res.status(400).send("This email already exists, please log in.");
@@ -176,7 +174,7 @@ app.post("/register", (req, res) => {
     users[randomId] = { 
       id: randomId,
       email: userEmail,
-      password: userPass
+      password: hashed
     }
     res.redirect('/urls');
   }
@@ -226,3 +224,4 @@ app.get("/u/:id", (req, res) => {
 
 // Fix bug clicking lil link 
 // Unable to delete URLs through curl that belong to you -cant scope cookies
+// User can log in with incorrect email
