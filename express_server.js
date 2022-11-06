@@ -3,60 +3,17 @@ var cookieSession = require('cookie-session')
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
+const { generateRandomString, userExists, urlExists, getUserId, urlsForUser } = require("./helpers");
 
 app.set("view engine", "ejs");
 
 app.use(cookieSession({
   name: 'session',
   keys: ['secret'],
-
-  // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }))
 
 app.use(express.urlencoded({ extended: true }));
-
-function generateRandomString() {
-  return Array.from(Array(6), () => Math.floor(Math.random() * 36).toString(36)).join('');
-};
-
-function userExists(userEmail, userList) {
-  for (const user in userList) {
-    if (userList[user].email === userEmail) {
-      return true;
-    }
-  }
-  return false;
-};
-
-function urlExists(entered, urlList) {
-  for (const url in urlList) {
-    if (url === entered) {
-      return true;
-    }
-  }
-  return false;
-};
-
-function getUserId(userEmail, userList) {
-  for (const user in userList) {
-    if (userList[user].email === userEmail) {
-      return userList[user].id;
-    }
-  }
-  return false;
-};
-
-function urlsForUser(id, urlList) {
-  const filteredUrls = {};
-  
-  for (let url in urlList) {
-    if (urlList[url].userId === id) {
-      filteredUrls[url] = urlList[url];
-    }
-  }
-  return filteredUrls;
-}
 
 const users = {
   '0owvjr': {
@@ -104,8 +61,7 @@ app.post("/urls", (req, res) => {
 
 app.post('/login', (req, res) => {
   const userEmail = req.body.email;
-  const userPass = req.body.password;
-  const hashed = bcrypt.hashSync(userPass, 10);
+  const hashed = bcrypt.hashSync(req.body.password, 10);
   const id = getUserId(userEmail, users);
   for (let x in users) {
     if (users[x]['email'] === req.body.email && bcrypt.compareSync(users[x]['password'], hashed)) {
@@ -129,7 +85,9 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.url;
+  urlDatabase[req.params.id].longURL = req.body.url;
+  console.log(urlDatabase[req.params.id])
+  console.log(req.body.url)
   res.redirect('/urls');
 });
 
@@ -177,7 +135,7 @@ app.post("/register", (req, res) => {
   } else if (userExists(userEmail, users)) {
     res.status(400).send("This email already exists, please log in.");
   } else {
-    res.session('user_id', randomId);
+    req.session.user_id = randomId;
     users[randomId] = { 
       id: randomId,
       email: userEmail,
@@ -220,8 +178,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  console.log(urlDatabase[req.params.id]);
+  const longURL = urlDatabase[req.params.id].longURL;
   if (longURL && urlExists(req.params.id, urlDatabase)) {
     res.redirect(longURL);
   } else {
@@ -229,5 +186,5 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-// Fix bug clicking lil link 
 // Unable to delete URLs through curl that belong to you -cant scope cookies
+// Cannot login with correct email password combination for new users
