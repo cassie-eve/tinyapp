@@ -1,11 +1,18 @@
 const express = require("express");
-var cookieParser = require('cookie-parser');
+var cookieSession = require('cookie-session')
 const bcrypt = require("bcryptjs");
 const app = express();
-app.use(cookieParser())
 const PORT = 8080;
 
 app.set("view engine", "ejs");
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['secret'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -83,13 +90,13 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session['user_id']) {
     res.status(403).send("You need to be signed in to do this.");
   } else {
     let shortURL = generateRandomString()
     urlDatabase[shortURL] = {
         longURL: req.body.longURL,
-        userId: req.cookies['user_id']
+        userId: req.session['user_id']
     }
     res.redirect(`/urls/${shortURL}`);
   }
@@ -102,7 +109,7 @@ app.post('/login', (req, res) => {
   const id = getUserId(userEmail, users);
   for (let x in users) {
     if (users[x]['email'] === req.body.email && bcrypt.compareSync(users[x]['password'], hashed)) {
-    res.cookie('user_id', id);
+    req.session.user_id = id;
     res.redirect('/urls');
     } else if (!userExists(userEmail, users)) {
       res.status(403).send("This email address has not been registered.");
@@ -113,7 +120,7 @@ app.post('/login', (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  if (urlDatabase[req.params.id].userId === req.cookies['user_id']) {
+  if (urlDatabase[req.params.id].userId === req.session['user_id']) {
     delete urlDatabase[req.params.id];
     res.redirect(`/urls`);
   } else {
@@ -127,7 +134,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session['user_id'];
   const templateVars = { 
     urls: urlsForUser(userId, urlDatabase),
     user: users[userId]
@@ -136,11 +143,11 @@ app.get('/urls', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session['user_id'];
   const templateVars = { 
     user: users[userId]
   };
-  if (!req.cookies['user_id']) {
+  if (!req.session['user_id']) {
     res.render('urls_register', templateVars);
   } else {
     res.redirect('/urls');
@@ -148,11 +155,11 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session['user_id'];
   const templateVars = { 
     user: users[userId]
   };
-  if (!req.cookies['user_id']) {
+  if (!req.session['user_id']) {
     res.render('urls_login', templateVars);
   } else {
     res.redirect('/urls');
@@ -170,7 +177,7 @@ app.post("/register", (req, res) => {
   } else if (userExists(userEmail, users)) {
     res.status(400).send("This email already exists, please log in.");
   } else {
-    res.cookie('user_id', randomId);
+    res.session('user_id', randomId);
     users[randomId] = { 
       id: randomId,
       email: userEmail,
@@ -181,11 +188,11 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session['user_id'];
   const templateVars = {
     user: users[userId]
   };
-  if (req.cookies['user_id']) {
+  if (req.session['user_id']) {
     res.render("urls_new", templateVars);
   } else {
     res.redirect('/login');
@@ -193,12 +200,12 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/login');
 });
 
 app.get("/urls/:id", (req, res) => {
-  const userId = req.cookies['user_id'];
+  const userId = req.session['user_id'];
   const templateVars = { 
     id: req.params.id, 
     user: users[userId],
@@ -224,4 +231,3 @@ app.get("/u/:id", (req, res) => {
 
 // Fix bug clicking lil link 
 // Unable to delete URLs through curl that belong to you -cant scope cookies
-// User can log in with incorrect email
