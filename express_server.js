@@ -1,18 +1,15 @@
+// Requirements
 const express = require("express");
-var cookieSession = require("cookie-session");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const { generateRandomString, userExists, urlExists, getUserId, urlsForUser } = require("./helpers");
+
+// Setup and Middleware
 const app = express();
 const PORT = 8080;
-const {
-  generateRandomString,
-  userExists,
-  urlExists,
-  getUserId,
-  urlsForUser,
-} = require("./helpers");
 
 app.set("view engine", "ejs");
-
+app.use(express.urlencoded({ extended: true }));
 app.use(
   cookieSession({
     name: "session",
@@ -20,12 +17,6 @@ app.use(
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
   })
 );
-
-app.use(express.urlencoded({ extended: true }));
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 const users = {
   "0owvjr": {
@@ -46,6 +37,8 @@ const urlDatabase = {
   },
 };
 
+
+// For testing - TBR
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -54,6 +47,8 @@ app.get("/users.json", (req, res) => {
   res.json(users);
 });
 
+
+// Routes and endpoints
 app.post("/urls", (req, res) => {
   if (!req.session["user_id"]) {
     res.status(403).send("You need to be signed in to do this.");
@@ -75,20 +70,15 @@ app.post("/login", (req, res) => {
       user = users[x];
     }
   }
-
   if (!user) {
     return res.status(403).send("This email address has not been registered.");
   }
-
   if (!bcrypt.compareSync(req.body.password, user.password)) {
     return res.status(403).send("Incorrect email / password combination.");
   }
-
   req.session.user_id = id;
   res.redirect('/urls');
 });
-
-
 
 app.post("/urls/:id/delete", (req, res) => {
   if (urlDatabase[req.params.id].userId === req.session["user_id"]) {
@@ -200,5 +190,7 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-// Unable to delete URLs through curl that belong to you -cant scope cookies
-// Create more tests
+// Listener
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
