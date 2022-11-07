@@ -44,7 +44,7 @@ app.post("/login", (req, res) => {
       user = users[x];
     }
   }
-  if (!user) {
+  if (!user.email) {
     return res.status(403).send("This email address has not been registered.");
   }
   if (!bcrypt.compareSync(req.body.password, user.password)) {
