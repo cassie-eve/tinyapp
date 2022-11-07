@@ -4,8 +4,9 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Main URLs page"](https://github.com/cassie-eve/tinyapp/blob/main/docs/urls_page.png?raw=true)
+!["Individual URL page"](https://github.com/cassie-eve/tinyapp/blob/main/docs/url_show.png?raw=true)
+!["Create URL page"](https://github.com/cassie-eve/tinyapp/blob/main/docs/create_url.png?raw=true)
 
 ## Dependencies
 
