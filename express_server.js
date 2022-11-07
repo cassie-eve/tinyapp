@@ -18,35 +18,9 @@ app.use(
   })
 );
 
-const users = {
-  "0owvjr": {
-    id: "0owvjr",
-    email: "cass@cass.ca",
-    password: "cass",
-  },
-};
+const users = {};
 
-const urlDatabase = {
-  b2xVn2: {
-    longURL: "http://www.lighthouselabs.ca",
-    userId: "0owvjr",
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userId: "0owvjr",
-  },
-};
-
-
-// For testing - TBR
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/users.json", (req, res) => {
-  res.json(users);
-});
-
+const urlDatabase = {};
 
 // Routes and endpoints
 app.post("/urls", (req, res) => {
@@ -91,8 +65,6 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id].longURL = req.body.url;
-  console.log(urlDatabase[req.params.id]);
-  console.log(req.body.url);
   res.redirect("/urls");
 });
 
