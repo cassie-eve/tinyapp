@@ -76,8 +76,12 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id].longURL = req.body.url;
-  res.redirect("/urls");
+  if (urlDatabase[req.params.id].userId === req.session["user_id"]) {
+    urlDatabase[req.params.id].longURL = req.body.url;
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("You do not have permission to delete this URL.");
+  }
 });
 
 app.get("/urls", (req, res) => {
