@@ -140,13 +140,13 @@ app.post("/logout", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const userId = req.session["user_id"];
-  const templateVars = {
-    id: req.params.id,
-    user: users[userId],
-    urlUserId: req.params.id.userId,
-    longURL: urlDatabase[req.params.id].longURL,
-  };
-  if (urlExists(req.params.id, urlDatabase)) {
+  if (urlExists(req.params.id, urlDatabase) && urlDatabase[req.params.id].userId === req.session["user_id"]) {
+    const templateVars = {
+      id: req.params.id,
+      user: users[userId],
+      urlUserId: req.params.id.userId,
+      longURL: urlDatabase[req.params.id].longURL,
+    };
     res.render("urls_show", templateVars);
   } else {
     res.status(404).send("Oops! This URL doesn't exist.");
@@ -154,13 +154,15 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
-  if (longURL && urlExists(req.params.id, urlDatabase)) {
-    res.redirect(longURL);
-  } else {
+  if (!urlExists(req.params.id, urlDatabase)) {
     res.status(404).send("Oops! This URL doesn't exist.");
+  } else if (urlDatabase[req.params.id].userId !== req.session["user_id"]) {
+    res.status(403).send("You do not have access to this URL.");
+  } else {
+    res.redirect(longURL);
   }
-});
+ });
+ 
 
 // Listener
 app.listen(PORT, () => {
