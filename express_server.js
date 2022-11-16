@@ -23,6 +23,18 @@ const users = {};
 const urlDatabase = {};
 
 // Routes and endpoints
+app.get("/", (req, res) => {
+  const userId = req.session["user_id"];
+  const templateVars = {
+    user: users[userId],
+  };
+  if (!req.session["user_id"]) {
+    res.render("urls_login", templateVars);
+  } else {
+    res.redirect("/urls");
+  }
+});
+
 app.post("/urls", (req, res) => {
   if (!req.session["user_id"]) {
     res.status(403).send("You need to be signed in to do this.");
